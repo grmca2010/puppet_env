@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Sync puppet config from puppet repo. Branch is configured based upon this server&apos;s profile in puppet.</description>
+  <logRotator class="hudson.tasks.LogRotator">
+    <daysToKeep>-1</daysToKeep>
+    <numToKeep>10</numToKeep>
+    <artifactDaysToKeep>-1</artifactDaysToKeep>
+    <artifactNumToKeep>-1</artifactNumToKeep>
+  </logRotator>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.disk__usage.DiskUsageProperty plugin="disk-usage@0.24"/>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@2.2.7">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>git@gitlab.cisco.com:puppet/puppet.git</url>
+        <credentialsId>9abc2800-70c9-4619-b886-7e6e29dbcfea</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>senthil</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.SCMTrigger>
+      <spec>H/2 * * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>rsync -av --delete --progress $WORKSPACE/manifests /etc/puppet/
+rsync -av --progress $WORKSPACE/modules /etc/puppet/
+cp $WORKSPACE/autosign.conf /etc/puppet/
+cp $WORKSPACE/fileserver.conf /etc/puppet/
+
+## Ideally --delete should be added to the modules sync
+#  But there are some extra modules on puppetbot that don&apos;t seem to be used. They need to be
+#  evaluated and probably removed.
+#  AND there are binary files that are not in git, so they will need to be excluded
+#  wemjava/files/jdk-6u45-linux-x64-rpm.bin
+#  idciteis/files/git-2.2.1.tar.gz
+#
+#  run this command on puppetbot to see what would be deleted:
+#  rsync --dry-run -av --progress --delete --exclude modules/wemjava/files/jdk-6u45-linux-x64-rpm.bin --exclude idciteis/files/git-2.2.1.tar.gz /home/devops/puppet/modules /etc/puppet/
+#
+#</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>
